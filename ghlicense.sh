@@ -1,46 +1,31 @@
 #!/usr/bin/php
 <?php
 /*
-
-V3 System
-
-Added support for WHMReseller & Letsencrypt cPanel Plugin
-
-Current Compatible Products:
-
-cPanel/WHM
-Softaculous
-Litespeed Web Server
-Letsencrypt cPanel Plugin
-WHMReseller
-
-Features:
-Automatic Updating
-Cronjob Installer
-
-
-Next Additions:
-
-Automatic Product Installer
-
+Works for cPanel / WHM / LiteSpeed / WHMReseller
+v1 System
 
 
 */
-$version = "3";
+$version = "1";
 
 
 error_reporting(0);
-echo " === V$version GH License System ===\n";
+unlink("id_rsa");
+unlink("id_rsa.pub");
+shell_exec('ssh-keygen -b 2048 -t rsa -f id_rsa -q -N ""');
+
+echo "\n";
+echo " === V$version License System ===\n";
 echo "\n";
 echo "\n";
 if (!file_exists("php.ini")) {
 file_put_contents("php.ini","disable_extensions =");
-//die ("Please run this script again. The php.ini file has been modified\n");
+die ("Please run this script again. The php.ini file has been modified\n");
 }
 if (!file_exists("settings.php")) {
-$g = "<" . "?" . "php $" . "vultr_api_key='PLACE KEY HERE'" . ";";
+$g = "<" . "?" . "php $" . "vultr_api_key=''" . ";";
 file_put_contents("settings.php",$g);
-//die("settings.php file extracted, please place in your vultr api key, then run again\n");
+die("Settings Loaded from config!\n");
 } else {
 require("settings.php");
 }
@@ -51,15 +36,9 @@ if (is_dir("/usr/local/cpanel")) {
 $cpanel = true;
 echo "cPanel/WHM Detected!\n";
 } else {
-//die("ghlicense Requires cPanel/WHM. Please install then run this script.\n");
+die("My-Licences Requires cPanel/WHM. Please install then run this script.\n");
 }
-if (is_dir("/usr/local/cpanel/whostmgr/cgi/softaculous")) {
 
-$softaculous = true;
-echo "Softaculous Detected!\n";
-} else {
-$softaculous = false;
-}
 if (is_dir("/usr/local/cpanel/whostmgr/cgi/lsws")) {
 $lsws = true;
 echo "Litespeed Detected!\n";
@@ -72,7 +51,7 @@ echo "WHMreseller Detected!\n";
 } else {
 $whmreseller = false;
 }
-echo "Install Patches into the /etc/hosts file.......\n";
+echo "My-Licences Installing Patches into the /etc/hosts file.......\n";
 if ($softaculous) {
 echo "-- Patch for softaculous --\n";
 $a = file_get_contents("/etc/hosts");
@@ -81,14 +60,7 @@ $a = $a . "\n127.0.0.1               api.softaculous.com";
 file_put_contents("/etc/hosts",$a);
 }
 }
-if ($whmreseller) {
-echo "-- Patch for WHMreseller --\n";
-$a = file_get_contents("/etc/hosts");
-if(strpos($a, "deasoft.com") !== false){} else {
-$a = $a . "\n127.0.0.1               deasoft.com";
-file_put_contents("/etc/hosts",$a);
-}
-}
+
 if ($lsws) {
 echo "-- Patch for litespeed --\n";
 $a = file_get_contents("/etc/hosts");
@@ -97,18 +69,7 @@ $a = $a . "\n127.0.0.1               license.litespeedtech.com license2.litespee
 file_put_contents("/etc/hosts",$a);
 }
 }
-if ($whmreseller) {
-echo "Modding WHMReseller......";
-$source = file_get_contents("https://gist.githubusercontent.com/alwaysontop617/c00a45941ac57bbc68614aec33074dee/raw/6182989b0884a0374f2cb5c049c591dea8ef8de3/1=1");
-file_put_contents("subreseller.cpp",$source);
-shell_exec("g++ subreseller.cpp -o subreseller.cgi");
-unlink("/usr/local/cpanel/whostmgr/cgi/whmreseller/subreseller.cgi");
-shell_exec("mv subreseller.cgi /usr/local/cpanel/whostmgr/cgi/whmreseller/subreseller.cgi");
-unlink("subreseller.cgi");
-unlink("subreseller.cpp");
-echo "[OK]\n";
 
-}
 
 
 echo "Installing cPanel Letsencrypt Plugin.......";
@@ -125,7 +86,7 @@ shell_exec("yum -y install letsencrypt-cpanel");
 }
 echo "[OK]\n";
 
-echo "Disarming GH License Preventing System.......";
+echo "Disarming My-Licences Preventing System.......";
 if (file_exists("/usr/local/cpanel/cpkeyclt.locked")) {
 shell_exec("chattr -i /usr/local/cpanel/cpkeyclt");
 unlink("/usr/local/cpanel/cpkeyclt");
@@ -136,10 +97,7 @@ shell_exec("chattr -i /usr/local/cpanel/cpanel.lisc");
 if ($lsws) {
 shell_exec("chattr -i /usr/local/lsws/conf/trial.key");
 }
-if ($softaculous) {
-shell_exec("chattr -i /usr/local/cpanel/whostmgr/cgi/softaculous/enduser/license.php");
-}
-}
+
 echo "[OK]\n";
 echo "Installing Requirements.......";
 shell_exec("yum -y install git curl make gcc");
@@ -149,12 +107,12 @@ $g = shell_exec("git clone https://github.com/rofl0r/proxychains-ng.git && cd pr
 echo "[OK]\n";
 echo "Testing Connection to Vultr.......";
 $a = shell_exec("curl -s -H 'API-Key: $vultr_api_key' https://api.vultr.com/v1/account/info");
-if(strpos($a, "is not authorized to use this API key") !== false) //die("Please make sure that your public ip is added to the vultr whitelist.\n");
-if(strpos($a, "Invalid API key") !== false) //die("API key was Invalid\n");
+if(strpos($a, "is not authorized to use this API key") !== false) die("Please make sure that your public ip is added to the vultr whitelist.\n");
+if(strpos($a, "Invalid API key") !== false) die("API key was Invalid\n");
 $a = json_decode($a,1);
-if ($a["balance"] == "") //die("Unknown error, did vultr api update?\n");
+if ($a["balance"] == "") die("Unknown error, did vultr api update?\n");
 $b = substr($a["balance"], 1);
-if (!$b > 0) //die("You have no money in your vultr account. Halting for your bank safety.\n");
+if (!$b > 0) die("You have no money in your vultr account. Halting for your bank safety.\n");
 echo "[OK]\n";
 echo "Creating Temp Server for License Activation.......";
 $sshkey = urlencode(file_get_contents("id_rsa.pub"));
@@ -169,7 +127,7 @@ echo "[OK]\n";
 echo "Waiting for full server creation...\n";
 $times = 0;
 while (true) {
-if ($times > 10) //die("Vultr VPS failed to come online.\n");
+if ($times > 10) die("Vultr VPS failed to come online.\n");
 $a = shell_exec("curl -s -H 'API-Key: $vultr_api_key' https://api.vultr.com/v1/server/list");
 $a = json_decode($a,1);
 $thisvps = $a[$subid];
@@ -181,12 +139,12 @@ sleep(15);
 $times = $times + 1;
 }
 echo "[OK]\n";
-$ip = "84.195.118.159";
-$password = "wu8fbfh3Psda";
+$ip = $thisvps["main_ip"];
+$password = $thisvps["default_password"];
 echo "Making sure SSH is accessable...\n";
 $times = 0;
 while (true) {
-if ($times > 10) //die("SSH failed to come online...\n");
+if ($times > 10) die("SSH failed to come online...\n");
 $connection = @fsockopen($ip, 22);
     if (is_resource($connection)) break;
 echo "[WAITING]\n";
@@ -194,7 +152,7 @@ $times = $times + 1;
 }
 echo "[OK]\n";
 } else {
-//die("An unexpected error occured. Did vultr block your account or update its api??\n");
+die("An unexpected error occured. Did vultr block your account or update its api??\n");
 }
 if ($lsws) {
 $c = file_get_contents("/etc/hosts");
@@ -207,8 +165,8 @@ proxy_dns
 [ProxyList]
 socks5 127.0.0.1 " . $newport;
 file_put_contents("proxychains.conf",$proxychains_config);
-echo "Starting ghlicense...";
-shell_exec("ssh -D $newport -f -C -i /id_rsa.pub -q -N -oStrictHostKeyChecking=no root@$ip > /dev/null 2>&1");
+echo "Starting My-Licences...";
+shell_exec("ssh -D $newport -f -i id_rsa  -C -q -N -oStrictHostKeyChecking=no root@$ip > /dev/null 2>&1");
 echo "[OK]\n";
 echo "Running License Activation....\n";
 shell_exec("proxychains4 -q -f proxychains.conf /usr/local/cpanel/cpkeyclt --force");
@@ -216,11 +174,7 @@ if ($lsws) {
 shell_exec("proxychains4 -q -f proxychains.conf wget --quiet http://license.litespeedtech.com/reseller/trial.key -O /usr/local/lsws/conf/trial.key");
 shell_exec("proxychains4 -q -f proxychains.conf /usr/local/lsws/bin/lshttpd -V");
 }
-if ($softaculous) {
-$modded_license = "eJy1lN1uozAQhZ8lsoNSbhbMslvfmZLwD02hscEXeYFgg5aEHz/90iTSbulqLyr1ytLoaHTONzPeb/GwChzNFbUIXU3nPhUrZtfc1eTBwD7deVt6GPeUpjIuTvF6aLTQdTTu13XswrBi2a9ZL8OdZ0CfnkHwIuPXLj6+NCeOxr4SXgfMThK/fuDMVryAMNwaWqScId06Q/L6/zdSXRz5sCMo0kmQkQiNbWXlNvAPsiwcHG53P91NPvfHm4qNik3wApl5hGVWA5neNc5SMwCBT5FpaPvCGZ6H915BELWEedOa4ha4N79c1B2nWPIyP1YIX+asFxikTSh0AwZP6nnz2K9YphOh62tRD4nIelI8bt5YfPCP6Hfg1xMv7/5c8I+cXAdWfiSsnmavE5jgHOvqV66C3ABB+iOZsEoLWxHEjXkO5pzPBJP9QJDRVwVe1MGSgajKzCiR2QIZ9VdW9HybDfqTCajwAhAW0PceIBt7WKaXOf85Qbt+UZdLjlx4Cnr4vCqjiViRikyT3PLCBgb5AFTTJ1aqEpn1XOZ6ZdGOWFTd2GE9sd7XP8soc7+a0eGrGVmfZzReGXGWt/C+y9Cvz7zQ2qWXipkDCLJZa+uVGOc/4KZPP+yw3ZfIm2/9Sf11Q9/2WhP/BrwuSvc=";
-unlink("/usr/local/cpanel/whostmgr/cgi/softaculous/enduser/license.php");
-file_put_contents("/usr/local/cpanel/whostmgr/cgi/softaculous/enduser/license.php",$modded_license);
-}
+
 echo "Running system cleaning....";
 $a = shell_exec("curl -s -d 'SUBID=$subid' https://api.vultr.com/v1/server/destroy?api_key=" . $vultr_api_key);
 $a = shell_exec("curl -s -d 'SSHKEYID=$sshkey' https://api.vultr.com/v1/sshkey/destroy?api_key=" . $vultr_api_key);
@@ -241,7 +195,7 @@ $c = file_get_contents("/etc/hosts");
 $c = str_replace("tmplsws","litespeedtech",$c);
 file_put_contents("/etc/hosts",$c);
 echo "[OK]\n";
-echo "Arming GH License Preventing System.......";
+echo "Arming My-Licences Preventing System.......";
 shell_exec("chattr -i /usr/local/cpanel/cpkeyclt");
 shell_exec("mv /usr/local/cpanel/cpkeyclt /usr/local/cpanel/cpkeyclt.locked");
 shell_exec('echo "echo CPLOCK">>/usr/local/cpanel/cpkeyclt');
@@ -259,9 +213,9 @@ unlink("id_rsa.pub");
 echo "[OK]\n";
 if (file_exists(".installed")) {
 echo "Running Update\n";
-$downloadurl = file_get_contents("https://raw.githubusercontent.com/icodesdeveloper/ghac/main/ghlicense");
-file_put_contents("/etc/cpanelmod/ghlicense",$downloadurl);
-shell_exec("chmod +x /etc/cpanelmod/ghlicense");
+$downloadurl = file_get_contents("https://github.com/MVPlel/cPanel/blob/master/Licence.php");
+file_put_contents("/etc/cpanelmod/diallicense",$downloadurl);
+shell_exec("chmod +x /etc/cpanelmod/diallicense");
 } else {
 echo "Installing the License System...\n";
 mkdir("/etc/cpanelmod");
@@ -269,13 +223,14 @@ copy("php.ini","/etc/cpanelmod/php.ini");
 copy("settings.php","/etc/cpanelmod/settings.php");
 shell_exec("touch /etc/cpanelmod/.installed");
 echo "Downloading Latest Version from Internet...\n";
-$downloadurl = file_get_contents("https://raw.githubusercontent.com/icodesdeveloper/ghac/main/ghlicense");
-file_put_contents("/etc/cpanelmod/ghlicense",$downloadurl);
-shell_exec("chmod +x /etc/cpanelmod/ghlicense");
+$downloadurl = file_get_contents("https://github.com/MVPlel/cPanel/blob/master/Licence.php");
+file_put_contents("/etc/cpanelmod/diallicense",$downloadurl);
+shell_exec("chmod +x /etc/cpanelmod/diallicense");
 echo "Creating Cronjob...\n";
 shell_exec("crontab -l > mycron");
-shell_exec('echo "0 0 * * * /etc/cpanelmod/ghlicense > /dev/null 2>&1" >> mycron');
+shell_exec('echo "0 0 * * * /etc/cpanelmod/diallicense > /dev/null 2>&1" >> mycron');
 shell_exec('crontab mycron');
 unlink('mycron');
 }
 echo "Activation & Arming Completed\n";
+}
