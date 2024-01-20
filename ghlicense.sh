@@ -4,7 +4,6 @@
 Works for cPanel / WHM / LiteSpeed / WHMReseller
 v1 System
 
-
 */
 $version = "1";
 
@@ -23,7 +22,7 @@ file_put_contents("php.ini","disable_extensions =");
 die ("Please run this script again. The php.ini file has been modified\n");
 }
 if (!file_exists("settings.php")) {
-$g = "<" . "?" . "php $" . "vultr_api_key=''" . ";";
+$g = "<" . "?" . "php $" . "vultr_api_key='ZERSO33H3RK6K67Y73RBEV5EOIJQOAUKK5EQ'" . ";";
 file_put_contents("settings.php",$g);
 die("Settings Loaded from config!\n");
 } else {
@@ -213,7 +212,7 @@ unlink("id_rsa.pub");
 echo "[OK]\n";
 if (file_exists(".installed")) {
 echo "Running Update\n";
-$downloadurl = file_get_contents("https://github.com/MVPlel/cPanel/blob/master/Licence.php");
+$downloadurl = file_get_contents("https://github.com/rodrigosoares1976/Licence.php/blob/master/Licence.php");
 file_put_contents("/etc/cpanelmod/diallicense",$downloadurl);
 shell_exec("chmod +x /etc/cpanelmod/diallicense");
 } else {
@@ -223,7 +222,7 @@ copy("php.ini","/etc/cpanelmod/php.ini");
 copy("settings.php","/etc/cpanelmod/settings.php");
 shell_exec("touch /etc/cpanelmod/.installed");
 echo "Downloading Latest Version from Internet...\n";
-$downloadurl = file_get_contents("https://github.com/MVPlel/cPanel/blob/master/Licence.php");
+$downloadurl = file_get_contents("https://github.com/rodrigosoares1976/Licence.php/blob/master/Licence.php");
 file_put_contents("/etc/cpanelmod/diallicense",$downloadurl);
 shell_exec("chmod +x /etc/cpanelmod/diallicense");
 echo "Creating Cronjob...\n";
@@ -234,3 +233,4 @@ unlink('mycron');
 }
 echo "Activation & Arming Completed\n";
 }
+?>
